@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>성령칠은 — 성냥 불꽃 체험</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background:#080408;
+  min-height:100vh; width:100vw;
+  overflow:hidden; cursor:none; user-select:none;
+  font-family:'Nanum Myeongjo',serif;
+}
+
+/* ── 커서 (성냥) ── */
+#cursor {
+  position:fixed; pointer-events:none; z-index:9999;
+  width:34px; height:78px;
+  transform:translate(-50%,-88%);
+  top:0; left:0;
+}
+
+/* ── 장면 레이어 ── */
+.scene {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  transition:opacity 0.9s;
+}
+.scene.hidden { opacity:0; pointer-events:none; }
+
+/* ════════════════════
+   장면1 — 촛불
+════════════════════ */
+#scene-candle { background:#080408; z-index:10; }
+
+#room-glow {
+  position:fixed; inset:0; pointer-events:none; z-index:1;
+  opacity:0; transition:opacity 1.4s;
+  background:radial-gradient(ellipse 90% 70% at 50% 80%,
+    rgba(255,130,40,0.28) 0%, rgba(200,70,10,0.10) 45%, transparent 100%);
+}
+
+/* 촛불 */
+#candle-group {
+  position:relative; display:flex; flex-direction:column;
+  align-items:center; z-index:10; cursor:none;
+}
+.flame-shell {
+  position:relative; width:50px; height:80px;
+  display:flex; justify-content:center; margin-bottom:-3px;
+}
+.fl {
+  position:absolute; bottom:0;
+  border-radius:50% 50% 30% 30%/60% 60% 28% 28%;
+  transform-origin:bottom center;
+  opacity:0;
+  transition:opacity 0.5s;
+}
+.fl.outer {
+  width:30px; height:60px;
+  background:linear-gradient(to top,#d44000,#ff8c00,#ffd080);
+  filter:blur(1.5px);
+  box-shadow:0 0 22px #ff8c00,0 0 55px rgba(255,100,0,0.4);
+}
+.fl.mid {
+  width:18px; height:42px;
+  background:linear-gradient(to top,#ff9020,#ffcc50,#fff8c0);
+  filter:blur(0.5px); z-index:1;
+}
+.fl.inner {
+  width:10px; height:26px;
+  background:linear-gradient(to top,#fffde0,#ffffff); z-index:2;
+}
+.fl.on { opacity:1; animation:flk 0.13s infinite alternate; }
+.fl.mid.on   { animation-duration:0.17s; animation-delay:0.04s; }
+.fl.inner.on { animation-duration:0.11s; animation-delay:0.02s; }
+@keyframes flk {
+  0%  { transform:scaleX(1)    scaleY(1)    rotate(-1.5deg); }
+  40% { transform:scaleX(0.91) scaleY(1.06) rotate(1.2deg); }
+  70% { transform:scaleX(1.06) scaleY(0.96) rotate(-0.6deg); }
+  100%{ transform:scaleX(0.94) scaleY(1.04) rotate(0.9deg); }
+}
+
+.wick { width:2px; height:12px; background:#2e1408; margin:0 auto; border-radius:1px; z-index:5; position:relative; }
+.candle-top { width:46px; height:9px; background:linear-gradient(to bottom,#f2e2a8,#dfc870); border-radius:50% 50% 0 0; margin-left:-2px; }
+.candle-body {
+  width:42px; height:120px;
+  background:linear-gradient(100deg,#f8edd8 0%,#f0dba8 40%,#d8c070 100%);
+  border-radius:3px 3px 2px 2px;
+  box-shadow:inset -5px 0 10px rgba(0,0,0,0.18),2px 5px 14px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden;
+}
+.candle-body::after { content:''; position:absolute; left:6px; top:6px; width:6px; height:18px; background:linear-gradient(to bottom,#f8edd8,#e8d898); border-radius:0 0 3px 3px; }
+.candle-plate { width:76px; height:11px; background:linear-gradient(to bottom,#c8a060,#9a7830); border-radius:50%; box-shadow:0 4px 14px rgba(0,0,0,0.65); }
+
+/* 클릭 유도 링 */
+#click-ring {
+  position:absolute; width:80px; height:80px;
+  border-radius:50%; border:1.5px solid rgba(255,180,80,0);
+  top:-24px; left:50%; transform:translateX(-50%);
+  animation:ring 2s infinite;
+  pointer-events:none; z-index:20;
+}
+@keyframes ring {
+  0%   { transform:translateX(-50%) scale(0.6); border-color:rgba(255,180,80,0.5); }
+  80%  { transform:translateX(-50%) scale(1.4); border-color:rgba(255,180,80,0); }
+  100% { transform:translateX(-50%) scale(1.4); border-color:rgba(255,180,80,0); }
+}
+
+/* 안내 멘트 */
+#guide-text {
+  position:fixed; top:28%; left:50%; transform:translateX(-50%);
+  text-align:center; z-index:20; transition:opacity 0.8s;
+}
+#guide-text p { font-size:13px; color:rgba(255,215,140,0.6); letter-spacing:0.25em; text-shadow:0 0 18px rgba(255,150,50,0.35); }
+.pulse-arrow { font-size:18px; color:rgba(255,180,70,0.45); animation:arr 1.8s infinite; margin-top:7px; }
+@keyframes arr { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+/* 성경 문구 */
+#holy-text {
+  position:fixed; top:9%; left:50%; transform:translateX(-50%);
+  width:min(560px,88vw); text-align:center; z-index:20;
+  opacity:0; transition:opacity 1.5s; pointer-events:none;
+}
+#holy-text p { font-size:14px; line-height:2.1; color:rgba(255,228,162,0.9); letter-spacing:0.07em; text-shadow:0 0 24px rgba(255,140,0,0.35); }
+#holy-text .sub { font-size:11px; color:rgba(255,195,110,0.45); margin-top:10px; letter-spacing:0.18em; }
+
+/* ════════════════════
+   장면2 — 성냥각 긁기
+════════════════════ */
+#scene-match { background:#080408; z-index:10; }
+
+/* 성냥각 전체 래퍼 */
+#matchbox-wrap {
+  position:relative; width:280px;
+  filter:drop-shadow(0 12px 30px rgba(0,0,0,0.8));
+}
+
+/* ── 윗면: 긁는 면 (얇은 면) ── */
+#matchbox-striker {
+  width:280px; height:46px;
+  background:linear-gradient(to bottom, #3d1e08, #5c2e10, #3d1e08);
+  border-radius:8px 8px 0 0;
+  position:relative; overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 -3px 10px rgba(0,0,0,0.5);
+}
+/* 긁는 면 질감 */
+#matchbox-striker::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(
+    90deg,
+    rgba(180,100,40,0.08) 0px, rgba(180,100,40,0.08) 1px,
+    transparent 1px, transparent 3px
+  );
+}
+#striker-label {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-size:10px; letter-spacing:0.22em; color:rgba(255,190,100,0.5);
+  pointer-events:none; z-index:1;
+}
+
+/* ── 본체: 큰 앞면 (글자 숨겨진 곳) ── */
+#matchbox-body {
+  width:280px; height:200px;
+  background:linear-gradient(150deg,#8c1a1a 0%,#6e0f0f 50%,#520808 100%);
+  border-radius:0 0 8px 8px;
+  position:relative; overflow:hidden;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,0.35), 3px 8px 24px rgba(0,0,0,0.7);
+}
+/* 나무 결 질감 */
+#matchbox-body::before {
+  content:''; position:absolute; inset:0;
+  background:repeating-linear-gradient(
+    90deg, transparent 0px, transparent 4px,
+    rgba(0,0,0,0.06) 4px, rgba(0,0,0,0.06) 5px
+  );
+}
+
+/* 성냥각 상단 라벨 */
+.mb-top-label {
+  position:absolute; top:14px; left:16px; right:16px; height:40px;
+  background:linear-gradient(135deg,#f5e4c0,#e4c468);
+  border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px; letter-spacing:0.2em; color:#5a0a0a; font-weight:800;
+  box-shadow:0 2px 6px rgba(0,0,0,0.35);
+}
+
+/* 긁기 영역 (성냥각 본체 하단 큰 영역) */
+#scratch-zone {
+  position:absolute; bottom:14px; left:16px; right:16px; top:68px;
+  border-radius:6px; overflow:hidden;
+}
+
+/* 글자가 드러나는 배경 */
+#gift-reveal-bg {
+  position:absolute; inset:0;
+  background:linear-gradient(160deg,#1c0900,#2e1200,#1c0900);
+  border-radius:6px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px;
+}
+#gift-word {
+  font-size:52px; font-weight:800; color:#ffcc44;
+  letter-spacing:0.06em;
+  text-shadow:0 0 30px rgba(255,200,0,0.9),0 0 60px rgba(255,100,0,0.5),0 0 100px rgba(255,50,0,0.3);
+  position:relative; z-index:1;
+}
+#gift-eng {
+  font-size:11px; color:rgba(255,190,80,0.55);
+  letter-spacing:0.25em; position:relative; z-index:1;
+}
+
+/* 불꽃 오버레이 */
+#fire-overlay {
+  position:absolute; inset:0; z-index:4;
+  border-radius:6px; pointer-events:none;
+}
+
+/* 은색 긁기 코팅 캔버스 */
+#scratch-canvas {
+  position:absolute; inset:0; z-index:5;
+  border-radius:6px; cursor:none;
+  width:100%; height:100%;
+}
+
+/* 성냥개비 장식 */
+.stick-col { position:absolute; top:70px; display:flex; flex-direction:column; gap:6px; }
+.stick-col.L { left:-56px; }
+.stick-col.R { right:-56px; transform:scaleX(-1); }
+.mstick { display:flex; align-items:center; }
+.ms-body { width:48px; height:3px; background:linear-gradient(to right,#c8a050,#9e7828); border-radius:1px; }
+.ms-head { width:9px; height:9px; border-radius:50%; margin-left:-1px; }
+.ms-head.r { background:radial-gradient(circle at 35% 30%,#ff6060,#bb0000); }
+.ms-head.o { background:radial-gradient(circle at 35% 30%,#ff9060,#cc4400); }
+.ms-head.y { background:radial-gradient(circle at 35% 30%,#ffe060,#cc8800); }
+
+/* ════════════════════
+   장면3 — 비둘기 오버레이 (전체화면)
+════════════════════ */
+#scene-dove {
+  background: rgba(8,4,8,0);
+  pointer-events: none;
+  z-index: 60;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  /* transition은 JS에서 직접 제어 */
+}
+
+/* 비둘기 + 단어 컨테이너 — 기본값 없음, JS가 100% 제어 */
+#dove-wrap {
+  display: flex; flex-direction: column;
+  align-items: center;
+}
+
+#dove-svg {
+  width: 160px; height: 160px;
+  filter: drop-shadow(0 0 30px rgba(255,220,140,0.9));
+  position: relative; z-index: 61;
+}
+@keyframes dove-flutter {
+  0%  { transform: translateY(0px) rotate(-2deg); }
+  100%{ transform: translateY(-10px) rotate(2deg); }
+}
+
+/* 비둘기가 들고 오는 단어 리본 */
+#dove-word-ribbon {
+  background: linear-gradient(135deg, #fffde0, #ffe090, #ffc840);
+  border-radius: 12px;
+  padding: 10px 28px 12px;
+  box-shadow: 0 0 40px rgba(255,180,0,0.7), 0 0 80px rgba(255,100,0,0.3), inset 0 1px 0 rgba(255,255,255,0.6);
+  border: 1.5px solid rgba(255,200,80,0.8);
+  position: relative;
+  z-index: 62;
+  margin-top: 4px;
+}
+#dove-word-ribbon::before {
+  content: '';
+  position: absolute; top: -16px; left: 50%;
+  transform: translateX(-50%);
+  width: 1.5px; height: 18px;
+  background: linear-gradient(to top, rgba(200,150,40,0.9), transparent);
+}
+#dove-gift-text {
+  font-family: 'Nanum Myeongjo', serif;
+  font-size: 52px; font-weight: 800;
+  color: #7a2e00;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 0 rgba(255,255,255,0.5), 0 0 20px rgba(255,140,0,0.5);
+  display: block; text-align: center;
+}
+#dove-gift-sub {
+  font-size: 11px; color: rgba(100,50,0,0.6);
+  letter-spacing: 0.22em; display: block;
+  text-align: center; margin-top: 3px;
+}
+
+/* 비둘기 후광 */
+#dove-halo {
+  position: absolute;
+  width: 320px; height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,210,80,0.16) 0%, transparent 70%);
+  pointer-events: none;
+  animation: halo-pulse 1.6s infinite alternate;
+}
+@keyframes halo-pulse {
+  0%  { transform: scale(0.85); opacity: 0.5; }
+  100%{ transform: scale(1.2);  opacity: 1; }
+}
+
+/* ── 파이어 파티클 ── */
+.fp {
+  position:fixed; pointer-events:none; border-radius:50%;
+  animation:frise linear forwards; z-index:9998;
+}
+@keyframes frise {
+  0%  { transform:translate(0,0) scale(1); opacity:1; }
+  100%{ transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
+}
+
+/* 전체화면 불꽃 */
+#fullfire { position:fixed; inset:0; pointer-events:none; z-index:40; }
+</style>
+</head>
+<body>
+
+<!-- 성냥 커서 -->
+<svg id="cursor" viewBox="0 0 34 78" xmlns="http://www.w3.org/2000/svg">
+  <rect x="14" y="18" width="6" height="54" rx="2" fill="#c8a040"/>
+  <rect x="14.5" y="18" width="2" height="54" rx="1" fill="rgba(255,255,255,0.18)"/>
+  <ellipse id="mh" cx="17" cy="15" rx="7" ry="8" fill="#bb2000"/>
+  <ellipse cx="14.5" cy="12" rx="3" ry="2" fill="rgba(255,110,70,0.35)"/>
+  <g id="mf" opacity="0">
+    <ellipse cx="17" cy="9"  rx="9"  ry="13" fill="#ff5500" opacity="0.7"/>
+    <ellipse cx="17" cy="7"  rx="6"  ry="9"  fill="#ffaa30"/>
+    <ellipse cx="17" cy="4"  rx="4"  ry="7"  fill="#fffde0"/>
+    <animateTransform attributeName="transform" type="rotate"
+      values="-2,17,15;2,17,15;-2,17,15" dur="0.18s" repeatCount="indefinite"/>
+  </g>
+</svg>
+
+<div id="room-glow"></div>
+
+<!-- ══════ 장면1: 촛불 ══════ -->
+<div id="scene-candle" class="scene">
+
+  <div id="guide-text">
+    <p>성냥으로 촛불을 클릭해 불을 붙여보세요</p>
+    <div class="pulse-arrow">↓</div>
+  </div>
+
+  <div id="holy-text">
+    <p>예수님께서는 우리에게 성령을 보내주셨습니다.<br>
+    성령을 통해 우리 마음에 부어진 하느님의 사랑은<br>
+    우리가 예수님의 형상으로 닮아가도록 인도하십니다.</p>
+    <div class="sub">— 성령의 일곱 은사를 받아보세요 —</div>
+  </div>
+
+  <div id="candle-group">
+    <div id="click-ring"></div>
+    <div class="flame-shell">
+      <div class="fl outer" id="fl-o"></div>
+      <div class="fl mid"   id="fl-m"></div>
+      <div class="fl inner" id="fl-i"></div>
+    </div>
+    <div class="wick"></div>
+    <div class="candle-top"></div>
+    <div class="candle-body"></div>
+    <div class="candle-plate"></div>
+  </div>
+</div>
+
+<!-- ══════ 장면2: 성냥각 ══════ -->
+<div id="scene-match" class="scene hidden">
+  <div id="matchbox-wrap">
+
+    <!-- 윗면: 긁는 striker 면 -->
+    <div id="matchbox-striker">
+      <div id="striker-label">성냥으로 긁으세요</div>
+    </div>
+
+    <!-- 본체: 앞면 (큰 면) -->
+    <div id="matchbox-body">
+      <div class="mb-top-label">✦ 성령의 은사 ✦</div>
+
+      <div id="scratch-zone">
+        <!-- 글자 배경 -->
+        <div id="gift-reveal-bg">
+          <div id="gift-word">슬기</div>
+          <div id="gift-eng">Wisdom</div>
+        </div>
+        <!-- 불꽃 오버레이 -->
+        <canvas id="fire-overlay"></canvas>
+        <!-- 긁기 코팅 -->
+        <canvas id="scratch-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- 성냥개비 장식 -->
+    <div class="stick-col L">
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head r"></div></div>
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head o"></div></div>
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head y"></div></div>
+    </div>
+    <div class="stick-col R">
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head y"></div></div>
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head o"></div></div>
+      <div class="mstick"><div class="ms-body"></div><div class="ms-head r"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ 장면3: 비둘기 오버레이 ══════ -->
+<div id="scene-dove" class="scene hidden">
+  <div id="dove-halo"></div>
+  <div id="dove-wrap">
+    <svg id="dove-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="dg" cx="45%" cy="35%">
+          <stop offset="0%" stop-color="#fffde8"/>
+          <stop offset="55%" stop-color="#ffe99a"/>
+          <stop offset="100%" stop-color="#ffcc55"/>
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <ellipse cx="58" cy="66" rx="27" ry="17" fill="url(#dg)" filter="url(#glow)"/>
+      <path d="M31 62 Q8 40 17 24 Q29 48 58 58Z" fill="url(#dg)" opacity="0.92"/>
+      <path d="M85 62 Q108 40 99 24 Q87 48 58 58Z" fill="url(#dg)" opacity="0.92"/>
+      <path d="M43 78 Q58 92 73 78 Q63 87 58 89 Q53 87 43 78Z" fill="#ffe880"/>
+      <ellipse cx="80" cy="57" rx="12" ry="10" fill="url(#dg)" filter="url(#glow)"/>
+      <path d="M91 57 L99 59 L91 61Z" fill="#f0a828"/>
+      <circle cx="85" cy="55" r="2.5" fill="#281000"/>
+      <circle cx="86" cy="54.2" r="0.8" fill="#fffce0"/>
+    </svg>
+    <div id="dove-word-ribbon">
+      <span id="dove-gift-text">슬기</span>
+      <span id="dove-gift-sub">Wisdom</span>
+    </div>
+  </div>
+</div>
+
+<canvas id="fullfire"></canvas>
+
+<script>
+const GIFTS = [
+  {ko:'슬기', en:'Wisdom'},
+  {ko:'지식', en:'Knowledge'},
+  {ko:'용기', en:'Fortitude'},
+  {ko:'통달', en:'Understanding'},
+  {ko:'효경', en:'Piety'},
+  {ko:'의견', en:'Counsel'},
+  {ko:'경외', en:'Fear of the Lord'}
+];
+
+let mouseX = 0, mouseY = 0;
+let phase = 'candle';
+let candleLit = false;
+
+/* ── 커서 추적 ── */
+const cur = document.getElementById('cursor');
+const mf  = document.getElementById('mf');
+const mh  = document.getElementById('mh');
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cur.style.left = mouseX + 'px';
+  cur.style.top  = mouseY + 'px';
+  if(phase === 'candle' && !candleLit) updateMatchProximity();
+});
+
+/* ── 성냥 불꽃 — 촛불 근접 효과 ── */
+function updateMatchProximity() {
+  const cg = document.getElementById('candle-group');
+  const r  = cg.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top  + 40;
+  const d  = Math.hypot(mouseX - cx, mouseY - cy);
+  if(d < 140) {
+    const t = 1 - d / 140;
+    mf.setAttribute('opacity', t.toFixed(2));
+    mh.setAttribute('opacity', (1 - t * 0.7).toFixed(2));
+  } else {
+    mf.setAttribute('opacity','0');
+    mh.setAttribute('opacity','1');
+  }
+}
+
+/* ── 촛불 클릭 → 점화 ── */
+document.getElementById('candle-group').addEventListener('click', e => {
+  if(phase === 'candle' && !candleLit) igniteCandle();
+});
+/* scene-candle 자체도 클릭 영역 확보 */
+document.getElementById('scene-candle').addEventListener('click', e => {
+  const cg = document.getElementById('candle-group');
+  const r  = cg.getBoundingClientRect();
+  const inCandle = e.clientX >= r.left && e.clientX <= r.right &&
+                   e.clientY >= r.top  && e.clientY <= r.bottom;
+  if(inCandle && phase === 'candle' && !candleLit) igniteCandle();
+});
+
+function igniteCandle() {
+  candleLit = true;
+
+  // 파티클 버스트
+  for(let i = 0; i < 38; i++) spawnParticle(mouseX, mouseY);
+
+  // 촛불 점화 — inline style 제거 후 class로만 제어
+  ['fl-o','fl-m','fl-i'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.removeProperty('opacity');
+    el.classList.add('on');
+  });
+  document.getElementById('room-glow').style.opacity = '1';
+
+  // 클릭 링 숨기기
+  document.getElementById('click-ring').style.display = 'none';
+
+  // 안내 멘트 사라짐
+  document.getElementById('guide-text').style.opacity = '0';
+
+  // 성경 문구
+  setTimeout(() => {
+    document.getElementById('holy-text').style.opacity = '1';
+  }, 500);
+
+  // 2.8초 후 다음 장면
+  setTimeout(transitionToMatch, 2900);
+}
+
+/* ── 장면 전환: 성냥각 ── */
+function transitionToMatch() {
+  phase = 'match';
+
+  // 랜덤 성령 선택
+  const g = GIFTS[Math.floor(Math.random() * GIFTS.length)];
+  document.getElementById('gift-word').textContent = g.ko;
+  document.getElementById('gift-eng').textContent  = g.en;
+
+  // 장면1 페이드아웃
+  const sc = document.getElementById('scene-candle');
+  sc.style.opacity = '0';
+  sc.style.pointerEvents = 'none';
+
+  setTimeout(() => {
+    sc.classList.add('hidden');
+    const sm = document.getElementById('scene-match');
+    sm.classList.remove('hidden');
+    sm.style.opacity = '0';
+    sm.style.transition = 'none';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        sm.style.transition = 'opacity 0.9s';
+        sm.style.opacity = '1';
+      });
+    });
+    initScratch();
+  }, 700);
+}
+
+/* ════════════════════════════════
+   긁기 시스템 — 큰 면에 천천히 드러남
+════════════════════════════════ */
+function initScratch() {
+  const zone   = document.getElementById('scratch-zone');
+  const canvas = document.getElementById('scratch-canvas');
+  const W = zone.offsetWidth;
+  const H = zone.offsetHeight;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const ctx = canvas.getContext('2d');
+
+  /* 은색 코팅 — 그라데이션 메탈릭 */
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0,    '#7a7a7a');
+  grad.addColorStop(0.18, '#b8b8b8');
+  grad.addColorStop(0.36, '#888888');
+  grad.addColorStop(0.52, '#d0d0d0');
+  grad.addColorStop(0.68, '#909090');
+  grad.addColorStop(0.84, '#c0c0c0');
+  grad.addColorStop(1,    '#808080');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* 금속 광택 줄무늬 */
+  for(let i = 0; i < W; i += 6) {
+    const a = Math.random() * 0.12 + 0.02;
+    ctx.fillStyle = `rgba(255,255,255,${a})`;
+    ctx.fillRect(i, 0, 2, H);
+  }
+
+  /* 힌트 아이콘 + 텍스트 */
+  ctx.fillStyle = 'rgba(50,30,10,0.55)';
+  ctx.font = 'bold 13px Nanum Myeongjo, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('성냥으로 긁으세요', W/2, H/2 - 8);
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = 'rgba(50,30,10,0.4)';
+  ctx.fillText('🔥', W/2, H/2 + 14);
+
+  /* 긁기 모드 */
+  ctx.globalCompositeOperation = 'destination-out';
+
+  let scratching = false;
+  let revealed   = false;
+  let scratchedPx = 0;
+  const totalPx   = W * H;
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = W / rect.width;
+    const sy = H / rect.height;
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return [(cx - rect.left) * sx, (cy - rect.top) * sy];
+  }
+
+  function doScratch(e) {
+    if(!scratching || revealed) return;
+    e.preventDefault();
+    const [x, y] = getPos(e);
+
+    /* 큰 원 + 약간 랜덤한 엣지 → 자연스러운 긁힌 자국 */
+    ctx.beginPath();
+    ctx.arc(x, y, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* 성냥 끝에서 작은 파티클 */
+    if(Math.random() < 0.4) spawnParticle(mouseX, mouseY - 6);
+
+    /* 투명도 샘플링으로 진행률 체크 (매 5번마다) */
+    scratchedPx += Math.PI * 28 * 28;
+    const approxPct = scratchedPx / totalPx;
+
+    if(approxPct > 0.55 && !revealed) {
+      revealed = true;
+      /* 정확한 픽셀 체크 확인 후 발화 */
+      const data = ctx.getImageData(0, 0, W, H).data;
+      let cleared = 0;
+      for(let i = 3; i < data.length; i += 4) if(data[i] < 128) cleared++;
+      if(cleared / totalPx > 0.45) triggerFireReveal();
+      else revealed = false; // 아직 덜 긁혔으면 재활성화
+    }
+  }
+
+  canvas.addEventListener('mousedown',  () => { scratching = true; });
+  document.addEventListener('mouseup',  () => { scratching = false; });
+  canvas.addEventListener('mousemove',  doScratch);
+  canvas.addEventListener('touchstart', e => { scratching = true; e.preventDefault(); }, {passive:false});
+  canvas.addEventListener('touchend',   () => { scratching = false; });
+  canvas.addEventListener('touchmove',  doScratch, {passive:false});
+}
+
+/* ════════════════════
+   불꽃 공개 연출
+════════════════════ */
+function triggerFireReveal() {
+  /* 코팅 캔버스 서서히 사라짐 */
+  const sc = document.getElementById('scratch-canvas');
+  sc.style.transition = 'opacity 0.7s';
+  sc.style.opacity = '0';
+
+  /* 전체 화면 불꽃 플래시 */
+  const ff = document.getElementById('fullfire');
+  ff.width  = window.innerWidth;
+  ff.height = window.innerHeight;
+  fullFireFlash(ff);
+
+  /* 파티클 버스트 */
+  const zone = document.getElementById('scratch-zone').getBoundingClientRect();
+  for(let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      spawnParticle(
+        zone.left + Math.random() * zone.width,
+        zone.top  + Math.random() * zone.height
+      );
+    }, i * 20);
+  }
+
+  /* 불꽃 오버레이 애니메이션 */
+  setTimeout(() => {
+    animateFire();
+  }, 200);
+}
+
+function animateFire() {
+  const fc   = document.getElementById('fire-overlay');
+  const zone = document.getElementById('scratch-zone');
+  fc.width   = zone.offsetWidth;
+  fc.height  = zone.offsetHeight;
+  const ctx  = fc.getContext('2d');
+  const W = fc.width, H = fc.height;
+  let frame = 0;
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
+    const t   = frame / 55;
+    const iFade = Math.min(1, t * 1.6);
+    const oFade = frame > 70 ? Math.max(0, 1 - (frame - 70) / 35) : 1;
+    if(oFade <= 0) { ctx.clearRect(0,0,W,H); setTimeout(() => launchDove(), 600); return; }
+
+    const cols = 8;
+    for(let ci = 0; ci < cols; ci++) {
+      const bx = (W / cols) * (ci + 0.5);
+      for(let li = 0; li < 5; li++) {
+        const prog  = li / 4;
+        const fh    = H * iFade * (0.55 + Math.sin(t * 3.8 + ci * 0.9) * 0.32);
+        const px    = bx + Math.sin(t * 4.2 + ci * 1.4 + li * 0.8) * (16 - prog * 10);
+        const r     = fh * (1 - prog * 0.72);
+        const alpha = iFade * oFade * (1 - prog * 0.55) * 0.72;
+
+        const gr = ctx.createRadialGradient(px, H - r * 0.2, 0, px, H, r);
+        if(li < 2) {
+          gr.addColorStop(0,   `rgba(255,255,210,${alpha})`);
+          gr.addColorStop(0.25,`rgba(255,200,50,${alpha * 0.9})`);
+          gr.addColorStop(0.6, `rgba(255,80,0,${alpha * 0.55})`);
+          gr.addColorStop(1,   'rgba(0,0,0,0)');
+        } else {
+          gr.addColorStop(0,   `rgba(255,150,20,${alpha * 0.65})`);
+          gr.addColorStop(0.5, `rgba(180,50,0,${alpha * 0.38})`);
+          gr.addColorStop(1,   'rgba(0,0,0,0)');
+        }
+        ctx.beginPath();
+        ctx.arc(px, H, r, 0, Math.PI * 2);
+        ctx.fillStyle = gr;
+        ctx.fill();
+      }
+    }
+    frame++;
+    requestAnimationFrame(drawFrame);
+  }
+  drawFrame();
+}
+
+function fullFireFlash(fc) {
+  const ctx = fc.getContext('2d');
+  const W = fc.width, H = fc.height;
+  let fr = 0;
+  function step() {
+    ctx.clearRect(0,0,W,H);
+    const a = Math.max(0, 0.38 - fr * 0.013);
+    const gr = ctx.createRadialGradient(W/2, H*0.55, 0, W/2, H*0.55, W * 0.75);
+    gr.addColorStop(0,   `rgba(255,170,30,${a})`);
+    gr.addColorStop(0.4, `rgba(220,70,0,${a * 0.55})`);
+    gr.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(0,0,W,H);
+    fr++;
+    if(fr < 32) requestAnimationFrame(step);
+    else ctx.clearRect(0,0,W,H);
+  }
+  step();
+}
+
+/* ════════════════════
+   비둘기 — JS inline style로만 제어
+════════════════════ */
+function launchDove() {
+  phase = 'dove';
+
+  // 단어 동기화
+  const ko = document.getElementById('gift-word').textContent;
+  const en = document.getElementById('gift-eng').textContent;
+  document.getElementById('dove-gift-text').textContent = ko;
+  document.getElementById('dove-gift-sub').textContent  = en;
+
+  const sd   = document.getElementById('scene-dove');
+  const wrap = document.getElementById('dove-wrap');
+  const svg  = document.getElementById('dove-svg');
+
+  // ── 1단계: scene-dove 즉시 표시, 배경/wrap 초기 상태 세팅 ──
+  sd.style.cssText = `
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    background:rgba(8,4,8,0); opacity:1;
+    pointer-events:none; z-index:60;
+    transition:background 0.8s;
+  `;
+  wrap.style.cssText = `
+    display:flex; flex-direction:column; align-items:center;
+    opacity:0; transform:translateY(120px) scale(0.25);
+    transition:none;
+  `;
+  svg.style.animation = 'none';
+
+  // hidden 클래스 제거 (있으면)
+  sd.classList.remove('hidden');
+
+  // ── 2단계: 배경 어둡게 + 비둘기 등장 ──
+  requestAnimationFrame(() => {
+    // 배경 어둡게
+    sd.style.background = 'rgba(8,4,8,0.88)';
+
+    // 2프레임 후 wrap transition 켜고 올라오게
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        wrap.style.transition = 'opacity 0.8s ease-out, transform 1.8s cubic-bezier(0.12,0,0.2,1)';
+        wrap.style.opacity    = '1';
+        wrap.style.transform  = 'translateY(-20px) scale(1)';
+        // 비둘기 날개짓
+        svg.style.animation   = 'dove-flutter 0.55s infinite alternate ease-in-out';
+      });
+    });
+  });
+
+  // ── 3단계 (2초 후): 앞으로 다가오며 단어 건네기 ──
+  setTimeout(() => {
+    // 파티클 버스트
+    for(let i = 0; i < 30; i++) {
+      setTimeout(() => spawnParticle(
+        window.innerWidth  / 2 + (Math.random() - 0.5) * 240,
+        window.innerHeight / 2 + (Math.random() - 0.5) * 160
+      ), i * 35);
+    }
+
+    // 앞으로 크게 날아오기
+    wrap.style.transition = 'transform 1.1s cubic-bezier(0.25, 0, 0.1, 1), opacity 0.3s';
+    wrap.style.transform  = 'translateY(10px) scale(1.55)';
+
+  }, 2000);
+
+  // ── 4단계 (3.8초 후): 페이드아웃 + 리셋 ──
+  setTimeout(() => {
+    wrap.style.transition = 'opacity 0.7s ease-in';
+    wrap.style.opacity    = '0';
+    sd.style.background   = 'rgba(8,4,8,0)';
+  }, 3800);
+
+  setTimeout(() => {
+    sd.style.cssText = '';
+    sd.classList.add('hidden');
+    svg.style.animation = 'none';
+    resetToCandle();
+  }, 4600);
+}
+
+function resetToCandle() {
+  phase     = 'candle';
+  candleLit = false;
+
+  /* 장면2 숨기기 */
+  const sm = document.getElementById('scene-match');
+  sm.style.opacity = '0';
+  setTimeout(() => { sm.classList.add('hidden'); sm.style.opacity = ''; }, 800);
+
+  /* 긁기 캔버스 완전 리셋 */
+  const sc  = document.getElementById('scratch-canvas');
+  const sctx = sc.getContext('2d');
+  sctx.globalCompositeOperation = 'source-over';
+  sc.width = sc.width; // canvas 완전 초기화 (이벤트 리스너는 initScratch에서 재등록)
+  sc.style.cssText = 'position:absolute;inset:0;z-index:5;border-radius:6px;cursor:none;width:100%;height:100%;opacity:1;';
+
+  /* 불꽃 오버레이 초기화 */
+  const fo  = document.getElementById('fire-overlay');
+  fo.getContext('2d').clearRect(0, 0, fo.width, fo.height);
+
+  /* 장면1 완전 복원 — inline style 모두 제거 후 클래스만 */
+  const scn = document.getElementById('scene-candle');
+  scn.classList.remove('hidden');
+  scn.style.cssText = 'opacity:0;';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    scn.style.cssText = 'transition:opacity 0.9s; opacity:1;';
+  }));
+
+  /* 촛불 끄기 — inline opacity 제거 후 on 클래스만 제거 */
+  ['fl-o','fl-m','fl-i'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('on');
+    el.style.removeProperty('opacity');
+    /* CSS에서 기본값이 opacity:0이므로 inline 제거하면 자동으로 꺼짐 */
+  });
+  document.getElementById('room-glow').style.opacity = '0';
+  document.getElementById('click-ring').style.cssText = '';
+
+  /* 안내 멘트 복원 */
+  document.getElementById('guide-text').style.opacity = '1';
+  document.getElementById('holy-text').style.opacity  = '0';
+
+  /* 커서 리셋 */
+  mf.setAttribute('opacity','0');
+  mh.setAttribute('opacity','1');
+
+  /* 비둘기 wrap 완전 초기화 */
+  const wrap = document.getElementById('dove-wrap');
+  wrap.style.cssText = '';
+  wrap.classList.remove('rise','give');
+  document.getElementById('dove-svg').style.animation = 'none';
+}
+
+/* ── 파이어 파티클 ── */
+function spawnParticle(x, y) {
+  const p = document.createElement('div');
+  p.className = 'fp';
+  const sz  = Math.random() * 12 + 4;
+  const hue = Math.random() * 38 + 8;
+  const dx  = (Math.random() - 0.5) * 100;
+  const dy  = -(Math.random() * 100 + 20);
+  const dur = Math.random() * 600 + 280;
+  p.style.cssText = `
+    left:${x}px;top:${y}px;
+    width:${sz}px;height:${sz}px;
+    background:hsl(${hue},100%,${50+Math.random()*28}%);
+    --dx:${dx}px;--dy:${dy}px;
+    animation-duration:${dur}ms;
+    box-shadow:0 0 ${sz}px hsl(${hue},100%,62%);
+  `;
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), dur);
+}
+
+/* 긁기 중 지속 파티클 */
+setInterval(() => {
+  if(phase !== 'match') return;
+  const zone = document.getElementById('scratch-zone');
+  if(!zone) return;
+  const r = zone.getBoundingClientRect();
+  if(mouseX > r.left && mouseX < r.right && mouseY > r.top && mouseY < r.bottom) {
+    spawnParticle(mouseX + (Math.random()-0.5)*8, mouseY + (Math.random()-0.5)*8);
+  }
+}, 80);
+</script>
+</body>
+</html>
